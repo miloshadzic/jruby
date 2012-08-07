@@ -1493,11 +1493,13 @@ public final class Ruby {
         }
         
         if (is1_9()) {
-            if (RubyInstanceConfig.COROUTINE_FIBERS) {
-                LoadService.reflectedLoad(this, "fiber", "org.jruby.ext.fiber.CoroutineFiberLibrary", getJRubyClassLoader(), false);
-            } else {
-                LoadService.reflectedLoad(this, "fiber", "org.jruby.ext.fiber.ThreadFiberLibrary", getJRubyClassLoader(), false);
-            }
+          if (RubyInstanceConfig.KILIM_FIBERS) {
+            LoadService.reflectedLoad(this, "fiber", "org.jruby.ext.fiber.KilimFiberLibrary", getJRubyClassLoader(), false);
+          } else if (RubyInstanceConfig.COROUTINE_FIBERS) {
+            LoadService.reflectedLoad(this, "fiber", "org.jruby.ext.fiber.CoroutineFiberLibrary", getJRubyClassLoader(), false);
+          } else {
+            LoadService.reflectedLoad(this, "fiber", "org.jruby.ext.fiber.ThreadFiberLibrary", getJRubyClassLoader(), false);
+          }
         }
         
         addBuiltinIfAllowed("openssl.jar", new Library() {

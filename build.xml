@@ -18,6 +18,10 @@
     <pathelement path="${jruby.classes.dir}"/>
   </path>
 
+  <path id="kilim.classpath">
+    <pathelement location="${build.lib.dir}/kilim.jar" />
+  </path>
+
   <path id="emma.classpath">
     <pathelement location="${build.lib.dir}/emma.jar" />
     <pathelement location="${build.lib.dir}/emma_ant.jar" />
@@ -314,8 +318,8 @@
 
   <target name="_gu_internal_" unless="unsafe.not.needed">
     <echo message="Generating Unsafe impl..."/>
-    <java classname="org.jruby.util.unsafe.UnsafeGenerator" fork="true" failonerror="true">
-      <classpath refid="jruby.execute.classpath"/>
+  <java classname="org.jruby.util.unsafe.UnsafeGenerator" failonerror="true">
+    <classpath refid="jruby.execute.classpath"/>
       <jvmarg line="${java.opts}"/>
       <!-- uncomment this line when building on a JVM with invokedynamic
            <jvmarg line="-XX:+InvokeDynamic"/>
@@ -330,7 +334,18 @@
       <echo file="${lib.dir}/native/libs.OK"/>
   </target>
 
-  <target name="jar-jruby" depends="init, compile, unzip-native-libs" unless="jar-up-to-date, jar-jruby.hasrun">
+  <target name="weave" depends="compile">
+    <echo message="Weaving Kilim code"/>
+    <java classname="kilim.tools.Weaver" fork="true" failonerror="true">
+      <jvmarg line="${java.opts}"/>
+      <classpath refid="kilim.classpath" />
+      <arg value="-d" />
+      <arg value="${jruby.classes.dir}" />
+      <arg value="${jruby.classes.dir}" />
+    </java>
+  </target>
+
+  <target name="jar-jruby" depends="init, compile, weave, unzip-native-libs" unless="jar-up-to-date, jar-jruby.hasrun">
       <jar destfile="${lib.dir}/jruby.jar" compress="true" index="true" update="true">
         <fileset dir="${jruby.classes.dir}"/>
         <zipfileset src="${asm.jar}"/>
@@ -338,6 +353,8 @@
         <zipfileset src="${asm.util.jar}"/>
         <zipfileset src="${asm.analysis.jar}"/>
         <zipfileset src="${asm.tree.jar}"/>
+        <zipfileset src="${build.lib.dir}/kilim.jar"/>
+        <zipfileset src="${build.lib.dir}/kilim-runtime.jar"/>
         <zipfileset src="${build.lib.dir}/bytelist.jar"/>
         <zipfileset src="${build.lib.dir}/constantine.jar"/>
         <zipfileset src="${build.lib.dir}/jline-${jline.version}.jar"/>
@@ -892,6 +909,8 @@
 
   <path id="test.class.path">
     <pathelement path="${build.lib.dir}/junit.jar"/>
+    <pathelement path="${build.lib.dir}/kilim.jar"/>
+    <pathelement path="${build.lib.dir}/kilim-runtime.jar"/>
     <pathelement path="${build.lib.dir}/livetribe-jsr223-2.0.6.jar"/>
     <pathelement path="${build.lib.dir}/bsf.jar"/>
     <pathelement path="${build.lib.dir}/commons-logging-1.1.1.jar"/>
