@@ -17,9 +17,6 @@ import kilim.*;
 public class KilimFiber extends Fiber {
   private volatile IRubyObject slot;
   private kilim.Task task;
-  private kilim.Mailbox<String> mb = new Mailbox<String>();
-  public boolean started = false;
-
 
   public KilimFiber(Ruby runtime, RubyClass type) {
     super(runtime, type);
@@ -34,22 +31,15 @@ public class KilimFiber extends Fiber {
         ThreadContext context = runtime.getCurrentContext();
         context.setFiber(KilimFiber.this);
         context.setThread(context.getThread());
-        slot = context.nil;
+        slot =  context.nil;
 
-        while (true) {
-          String s = mb.get();
-
-          if (s.equals("resume")) {
-            slot = block.yieldArray(context, slot, null, null);
-          }
-        }
+        slot = block.yieldArray(context, slot, null, null);
       };
     };
-    task.start();
   }
 
   protected IRubyObject resumeOrTransfer(ThreadContext context, IRubyObject arg, boolean transfer) {
-    mb.putnb("resume");
+    task.start();
     return slot;
   }
 
